@@ -1,0 +1,121 @@
+{
+  "disclaimer": "CRITICAL NOTE: Anomaly detection in UPI payments is fundamentally an unsupervised problem. In real banking systems, ground-truth labels are delayed, sparse, or incomplete. The metrics presented here are evaluated against our controlled synthetic benchmark (10,000 transactions) for portfolio validation and research only, and should not be claimed as guaranteed production banking performance.",
+  "dataset_summary": {
+    "total_samples": 10000,
+    "normal_samples": 9350,
+    "fraud_samples": 650,
+    "fraud_prevalence": 6.5
+  },
+  "detectors": {
+    "IQR": {
+      "confusion_matrix": {
+        "true_negatives": 8321,
+        "false_positives": 1029,
+        "false_negatives": 7,
+        "true_positives": 643
+      },
+      "precision": 0.3846,
+      "recall": 0.9892,
+      "f1_score": 0.5538,
+      "accuracy": 0.8964,
+      "false_positive_rate": 0.1101,
+      "false_negative_rate": 0.0108,
+      "roc_auc": 0.9922
+    },
+    "Isolation_Forest": {
+      "confusion_matrix": {
+        "true_negatives": 9254,
+        "false_positives": 96,
+        "false_negatives": 96,
+        "true_positives": 554
+      },
+      "precision": 0.8523,
+      "recall": 0.8523,
+      "f1_score": 0.8523,
+      "accuracy": 0.9808,
+      "false_positive_rate": 0.0103,
+      "false_negative_rate": 0.1477,
+      "roc_auc": 0.9918
+    },
+    "Time_Series": {
+      "confusion_matrix": {
+        "true_negatives": 9350,
+        "false_positives": 0,
+        "false_negatives": 559,
+        "true_positives": 91
+      },
+      "precision": 1.0,
+      "recall": 0.14,
+      "f1_score": 0.2456,
+      "accuracy": 0.9441,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": 0.86,
+      "roc_auc": 0.7668
+    },
+    "Ensemble_Risk_Engine": {
+      "confusion_matrix": {
+        "true_negatives": 9333,
+        "false_positives": 17,
+        "false_negatives": 97,
+        "true_positives": 553
+      },
+      "precision": 0.9702,
+      "recall": 0.8508,
+      "f1_score": 0.9066,
+      "accuracy": 0.9886,
+      "false_positive_rate": 0.0018,
+      "false_negative_rate": 0.1492,
+      "roc_auc": 0.9977
+    }
+  },
+  "scenario_detection_rates": {
+    "Device Change": {
+      "total": 70,
+      "detected": 70,
+      "detection_rate": 100.0,
+      "avg_risk_score": 71.2
+    },
+    "High Amount Fraud": {
+      "total": 120,
+      "detected": 107,
+      "detection_rate": 89.2,
+      "avg_risk_score": 69.6
+    },
+    "Location Change": {
+      "total": 70,
+      "detected": 69,
+      "detection_rate": 98.6,
+      "avg_risk_score": 70.1
+    },
+    "Multiple Signals": {
+      "total": 60,
+      "detected": 60,
+      "detection_rate": 100.0,
+      "avg_risk_score": 91.2
+    },
+    "Repeated Recipient": {
+      "total": 90,
+      "detected": 74,
+      "detection_rate": 82.2,
+      "avg_risk_score": 75.6
+    },
+    "Spending Burst": {
+      "total": 60,
+      "detected": 53,
+      "detection_rate": 88.3,
+      "avg_risk_score": 67.8
+    },
+    "Transaction Burst": {
+      "total": 100,
+      "detected": 75,
+      "detection_rate": 75.0,
+      "avg_risk_score": 73.6
+    },
+    "Unusual Time": {
+      "total": 80,
+      "detected": 45,
+      "detection_rate": 56.2,
+      "avg_risk_score": 61.8
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "rolling_window": 6,
+  "z_threshold": 2.5,
+  "global_baselines": {
+    "mean_hourly_count": 8.123476848090982,
+    "std_hourly_count": 4.552961291246117,
+    "mean_hourly_amount": 28824.72711616572,
+    "std_hourly_amount": 36659.2820127499,
+    "total_hourly_buckets": 1231,
+    "anomalous_hours_count": 0
+  }
+}

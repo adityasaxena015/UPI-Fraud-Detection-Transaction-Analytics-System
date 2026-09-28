@@ -1,0 +1,22 @@
+{
+  "model_type": "IsolationForest",
+  "n_estimators": 150,
+  "contamination": 0.065,
+  "features": [
+    "amount",
+    "amount_deviation",
+    "transactions_last_hour",
+    "transactions_last_24h",
+    "time_since_last_transaction",
+    "recipient_transaction_count",
+    "device_changed",
+    "location_changed",
+    "hour_of_day"
+  ],
+  "trained_at": "2026-09-29T00:47:10.226603",
+  "sample_count": 10000,
+  "score_min": -0.22589841228349072,
+  "score_max": 0.22454308167392045,
+  "score_median": 0.19824893151865966,
+  "score_q10": 0.040922115855543784
+}

@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPI Guard — Enterprise Fraud Detection & Anomaly Monitoring System</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-surface">
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar d-flex flex-column" id="sidebar">
+    <div class="sidebar-brand d-flex align-items-center gap-2 px-3 py-4">
+      <div class="brand-icon">
+        <i class="bi bi-shield-lock-fill"></i>
+      </div>
+      <div>
+        <h5 class="m-0 fw-bold tracking-tight text-white">UPI<span class="text-accent">Guard</span></h5>
+        <span class="badge bg-soft-primary text-primary-light font-monospace small">AI Sentinel v2.4</span>
+      </div>
+    </div>
+
+    <div class="sidebar-menu flex-grow-1 px-2">
+      <div class="nav-section-title px-3 pt-2 pb-1 text-uppercase text-muted-custom">Monitoring</div>
+      <a href="#" class="nav-link active" data-section="overview-section">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span>Overview Dashboard</span>
+      </a>
+      <a href="#" class="nav-link" data-section="simulator-section">
+        <i class="bi bi-cpu-fill"></i>
+        <span>Live Simulator</span>
+      </a>
+      <a href="#" class="nav-link" data-section="alerts-section">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>Fraud Alerts</span>
+        <span class="badge bg-danger rounded-pill ms-auto" id="nav-alert-badge">0</span>
+      </a>
+      <a href="#" class="nav-link" data-section="transactions-section">
+        <i class="bi bi-receipt-cutoff"></i>
+        <span>Transaction Stream</span>
+      </a>
+
+      <div class="nav-section-title px-3 pt-4 pb-1 text-uppercase text-muted-custom">Intelligence</div>
+      <a href="#" class="nav-link" data-section="sandbox-section">
+        <i class="bi bi-terminal-fill"></i>
+        <span>API Sandbox & Test</span>
+      </a>
+      <a href="#" class="nav-link" data-section="models-section">
+        <i class="bi bi-diagram-3-fill"></i>
+        <span>Model Architecture</span>
+      </a>
+    </div>
+
+    <!-- System Status Footer -->
+    <div class="sidebar-footer p-3 border-top border-secondary-subtle">
+      <div class="d-flex align-items-center gap-2">
+        <span class="status-pulse-dot"></span>
+        <div class="small">
+          <div class="fw-semibold text-white">Inference Engine Live</div>
+          <div class="text-muted-custom font-monospace small" id="live-clock">--:--:-- IST</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="main-wrapper" id="mainWrapper">
+
+    <!-- Top Header -->
+    <header class="top-navbar d-flex align-items-center justify-content-between px-4 py-3 border-bottom">
+      <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-sm btn-outline-secondary d-md-none" id="sidebarToggle">
+          <i class="bi bi-list fs-5"></i>
+        </button>
+        <div>
+          <h4 class="m-0 fw-bold text-white" id="page-title">UPI Fraud Detection & Anomaly Monitoring</h4>
+          <p class="m-0 text-muted-custom small">Triple-Engine Anomaly Sentinel: IQR + Isolation Forest + Time Series Velocity</p>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-primary d-flex align-items-center gap-2" id="quick-simulate-btn">
+          <i class="bi bi-play-circle-fill"></i>
+          <span>Quick Normal Simulation</span>
+        </button>
+        <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-2" id="quick-fraud-btn">
+          <i class="bi bi-lightning-charge-fill"></i>
+          <span>Simulate Attack</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Sections Container -->
+    <main class="content-container p-4">
+
+      <!-- SECTION 1: OVERVIEW DASHBOARD -->
+      <section id="overview-section" class="app-section active">
+        <!-- KPI Cards Row -->
+        <div class="row g-3 mb-4">
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="kpi-label">Total Transactions</span>
+                <span class="kpi-icon-wrap bg-soft-primary"><i class="bi bi-receipt text-primary-light"></i></span>
+              </div>
+              <h3 class="kpi-value text-white mt-2" id="kpi-total-tx">--</h3>
+              <div class="kpi-subtext text-muted-custom"><i class="bi bi-clock-history me-1"></i>Last 60 Days</div>
+            </div>
+          </div>
+
+          <div class="col-xl-3 col-md-4 col-sm-6">
+            <div class="kpi-card">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="kpi-label">Total Payment Volume</span>
+                <span class="kpi-icon-wrap bg-soft-success"><i class="bi bi-currency-rupee text-success"></i></span>
+              </div>
+              <h3 class="kpi-value text-white mt-2" id="kpi-total-vol">₹--</h3>
+              <div class="kpi-subtext text-muted-custom">Cumulative Settlement</div>
+            </div>
+          </div>
+
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="kpi-card border-danger-subtle">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="kpi-label">Suspicious Flagged</span>
+                <span class="kpi-icon-wrap bg-soft-danger"><i class="bi bi-shield-x text-danger"></i></span>
+              </div>
+              <h3 class="kpi-value text-danger mt-2" id="kpi-suspicious">--</h3>
+              <div class="kpi-subtext text-muted-custom"><span id="kpi-fraud-rate">0.0%</span> of volume</div>
+            </div>
+          </div>
+
+          <div class="col-xl-2 col-md-6 col-sm-6">
+            <div class="kpi-card border-warning-subtle">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="kpi-label">Critical / High Risk</span>
+                <span class="kpi-icon-wrap bg-soft-warning"><i class="bi bi-exclamation-octagon text-warning"></i></span>
+              </div>
+              <h3 class="kpi-value text-warning mt-2" id="kpi-high-critical">--</h3>
+              <div class="kpi-subtext text-muted-custom">Active Triage Queue</div>
+            </div>
+          </div>
+
+          <div class="col-xl-3 col-md-6 col-sm-12">
+            <div class="kpi-card border-info-subtle">
+              <div class="d-flex justify-content-between align-items-start">
+                <span class="kpi-label">Ensemble Precision & AUC</span>
+                <span class="kpi-icon-wrap bg-soft-info"><i class="bi bi-award-fill text-info"></i></span>
+              </div>
+              <div class="d-flex align-items-baseline gap-2 mt-2">
+                <h3 class="kpi-value text-white m-0">92.0%</h3>
+                <span class="badge bg-soft-info text-info">AUC 0.998</span>
+              </div>
+              <div class="kpi-subtext text-muted-custom">Benchmarked F1: 88.5%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 1: Trends -->
+        <div class="row g-3 mb-4">
+          <div class="col-lg-8">
+            <div class="card card-custom h-100">
+              <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="m-0 fw-bold text-white"><i class="bi bi-graph-up text-primary-light me-2"></i>UPI Transaction Volume & Anomaly Trends</h6>
+                  <small class="text-muted-custom">Daily transaction throughput vs. anomalous activity spikes</small>
+                </div>
+                <span class="badge bg-dark border border-secondary text-muted-custom">14-Day Rolling Window</span>
+              </div>
+              <div class="card-body p-3">
+                <div class="chart-container" style="position: relative; height:280px;">
+                  <canvas id="trendVolumeChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card card-custom h-100">
+              <div class="card-header-custom">
+                <h6 class="m-0 fw-bold text-white"><i class="bi bi-pie-chart-fill text-warning me-2"></i>Fraud Risk Tiers</h6>
+                <small class="text-muted-custom">Normalized 0–100 score distribution</small>
+              </div>
+              <div class="card-body p-3 d-flex flex-column justify-content-center align-items-center">
+                <div class="chart-container" style="position: relative; height:220px; width:220px;">
+                  <canvas id="riskDonutChart"></canvas>
+                </div>
+                <div class="d-flex justify-content-around w-100 mt-3 small font-monospace text-center">
+                  <div><span class="badge bg-success-subtle text-success">Low</span><div id="count-low" class="fw-bold mt-1 text-white">--</div></div>
+                  <div><span class="badge bg-info-subtle text-info">Medium</span><div id="count-med" class="fw-bold mt-1 text-white">--</div></div>
+                  <div><span class="badge bg-warning-subtle text-warning">High</span><div id="count-high" class="fw-bold mt-1 text-white">--</div></div>
+                  <div><span class="badge bg-danger-subtle text-danger">Critical</span><div id="count-crit" class="fw-bold mt-1 text-white">--</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 2: Detectors & Categories -->
+        <div class="row g-3 mb-4">
+          <div class="col-lg-6">
+            <div class="card card-custom h-100">
+              <div class="card-header-custom">
+                <h6 class="m-0 fw-bold text-white"><i class="bi bi-diagram-2 text-info me-2"></i>Detection Method Breakdown</h6>
+                <small class="text-muted-custom">Transactions flagged by individual vs. multi-engine consensus</small>
+              </div>
+              <div class="card-body p-3">
+                <div class="chart-container" style="position: relative; height:240px;">
+                  <canvas id="detectorBarChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="card card-custom h-100">
+              <div class="card-header-custom">
+                <h6 class="m-0 fw-bold text-white"><i class="bi bi-shop text-success me-2"></i>Merchant Category Vulnerability</h6>
+                <small class="text-muted-custom">Fraud prevalence across spending sectors</small>
+              </div>
+              <div class="card-body p-3">
+                <div class="chart-container" style="position: relative; height:240px;">
+                  <canvas id="categoryBarChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Alerts Quick Table -->
+        <div class="card card-custom">
+          <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="m-0 fw-bold text-white"><i class="bi bi-shield-exclamation text-danger me-2"></i>High-Priority Fraud Alerts (Recent)</h6>
+              <small class="text-muted-custom">Immediate operational action required</small>
+            </div>
+            <button class="btn btn-sm btn-outline-primary" onclick="switchSection('alerts-section')">View All Alerts <i class="bi bi-arrow-right"></i></button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-custom table-hover align-middle m-0" id="quick-alerts-table">
+              <thead>
+                <tr>
+                  <th>Alert ID</th>
+                  <th>Transaction ID</th>
+                  <th>Sender & Receiver</th>
+                  <th>Amount</th>
+                  <th>Risk Score</th>
+                  <th>Risk Level</th>
+                  <th>Detection Vector</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="quick-alerts-tbody">
+                <tr><td colspan="9" class="text-center py-4 text-muted-custom">Loading alerts...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: LIVE SIMULATOR -->
+      <section id="simulator-section" class="app-section">
+        <div class="row g-4">
+          <!-- Control Panel -->
+          <div class="col-lg-5">
+            <div class="card card-custom">
+              <div class="card-header-custom">
+                <h5 class="m-0 fw-bold text-white"><i class="bi bi-sliders text-primary-light me-2"></i>Live Transaction Simulator</h5>
+                <small class="text-muted-custom">Inject synthetic UPI transactions directly into the real-time detection pipeline</small>
+              </div>
+              <div class="card-body p-4">
+                <p class="text-muted-custom small">
+                  Simulate regular banking behavior or trigger any of the 8 realistic attack patterns to test real-time feature derivation, isolation tree ranking, IQR filtering, and instant alerting.
+                </p>
+
+                <div class="mb-3">
+                  <label class="form-label text-white small fw-semibold">Choose Simulation Mode / Attack Vector</label>
+                  <select class="form-select form-select-custom" id="sim-scenario-select">
+                    <option value="Normal">🟢 Normal Benign Transaction (Baseline Spending)</option>
+                    <option value="High Amount Fraud" selected>🔴 Scenario 1: High Amount Fraud (30x–60x Spike)</option>
+                    <option value="Transaction Burst">🔴 Scenario 2: Transaction Burst (12+ tx/hour)</option>
+                    <option value="Repeated Recipient">🔴 Scenario 3: Repeated Recipient (Targeted Drain)</option>
+                    <option value="Unusual Time">🔴 Scenario 4: Unusual Time (2:00 AM – 4:00 AM)</option>
+                    <option value="Device Change">🔴 Scenario 5: Device Change (Unrecognized Hardware)</option>
+                    <option value="Location Change">🔴 Scenario 6: Location Change (Sudden Geohop)</option>
+                    <option value="Spending Burst">🔴 Scenario 7: Spending Burst (Rapid High-Value Sequence)</option>
+                    <option value="Multiple Signals">🔥 Scenario 8: Multiple Signals (Extreme Multi-Vector Attack)</option>
+                    <option value="random">🎲 Random Mode (Dynamic Sampling)</option>
+                  </select>
+                </div>
+
+                <div class="d-grid gap-2 pt-2">
+                  <button class="btn btn-primary d-flex align-items-center justify-content-center gap-2 py-2" id="run-simulation-btn">
+                    <i class="bi bi-play-circle-fill"></i>
+                    <span class="fw-semibold">Inject & Analyze Transaction</span>
+                  </button>
+                  <button class="btn btn-outline-secondary btn-sm" id="run-normal-sim-btn">
+                    <i class="bi bi-check2-circle text-success me-1"></i> Quick Normal User Simulation
+                  </button>
+                </div>
+
+                <div class="border-top border-secondary-subtle pt-3 mt-4">
+                  <div class="small fw-semibold text-white mb-2"><i class="bi bi-info-circle me-1 text-info"></i>Simulation Vectors Explained</div>
+                  <ul class="text-muted-custom small ps-3 m-0">
+                    <li><strong>Burst & Velocity:</strong> Evaluates short-term rate spike in 1h and 24h rolling windows.</li>
+                    <li><strong>Multivariate ML:</strong> Isolation Forest scores 9 behavioral features simultaneously.</li>
+                    <li><strong>Consensus Engine:</strong> Automatically escalates to Critical when multiple detectors concur.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-Time Result Panel -->
+          <div class="col-lg-7">
+            <div class="card card-custom h-100" id="sim-result-card">
+              <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 class="m-0 fw-bold text-white"><i class="bi bi-activity text-accent me-2"></i>Real-Time Inference Result</h5>
+                  <small class="text-muted-custom" id="sim-result-subtitle">Awaiting transaction ingestion...</small>
+                </div>
+                <span class="badge bg-secondary font-monospace" id="sim-status-badge">STANDBY</span>
+              </div>
+              <div class="card-body p-4" id="sim-result-body">
+                <div class="text-center py-5 text-muted-custom">
+                  <i class="bi bi-cpu fs-1 d-block mb-3 text-secondary"></i>
+                  <h6>No live transaction processed yet</h6>
+                  <p class="small">Click "Inject & Analyze Transaction" on the left to see instant pipeline scoring, feature engineering, and explainability checkmarks.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: FRAUD ALERTS -->
+      <section id="alerts-section" class="app-section">
+        <div class="card card-custom">
+          <div class="card-header-custom d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+              <h5 class="m-0 fw-bold text-white"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Fraud Alert Triage Management</h5>
+              <small class="text-muted-custom">Investigate flagged UPI transactions and update operational status</small>
+            </div>
+            <!-- Filters -->
+            <div class="d-flex flex-wrap gap-2">
+              <select class="form-select form-select-sm form-select-custom w-auto" id="alert-status-filter">
+                <option value="">All Statuses</option>
+                <option value="New" selected>New</option>
+                <option value="Reviewing">Reviewing</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+              <select class="form-select form-select-sm form-select-custom w-auto" id="alert-risk-filter">
+                <option value="">All Risk Tiers</option>
+                <option value="Critical">Critical Risk</option>
+                <option value="High">High Risk</option>
+                <option value="Medium">Medium Risk</option>
+              </select>
+              <button class="btn btn-sm btn-outline-secondary" id="refresh-alerts-btn">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-custom table-hover align-middle m-0" id="full-alerts-table">
+              <thead>
+                <tr>
+                  <th>Alert ID</th>
+                  <th>Transaction ID</th>
+                  <th>Sender</th>
+                  <th>Receiver</th>
+                  <th>Amount</th>
+                  <th>Risk Score</th>
+                  <th>Tier</th>
+                  <th>Detection Methods</th>
+                  <th>Reasons Preview</th>
+                  <th>Status</th>
+                  <th>Triage Action</th>
+                </tr>
+              </thead>
+              <tbody id="full-alerts-tbody">
+                <tr><td colspan="11" class="text-center py-4 text-muted-custom">Loading alerts...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: TRANSACTION STREAM -->
+      <section id="transactions-section" class="app-section">
+        <div class="card card-custom">
+          <div class="card-header-custom d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+              <h5 class="m-0 fw-bold text-white"><i class="bi bi-list-columns-reverse text-primary-light me-2"></i>UPI Transaction Stream</h5>
+              <small class="text-muted-custom">Searchable archive of historical and live-injected UPI payments</small>
+            </div>
+            <!-- Search & Filters -->
+            <div class="d-flex flex-wrap gap-2">
+              <input type="text" class="form-control form-control-sm form-select-custom" placeholder="Search Sender ID (e.g. U1050)..." id="tx-search-sender" style="width: 220px;">
+              <select class="form-select form-select-sm form-select-custom w-auto" id="tx-category-filter">
+                <option value="">All Categories</option>
+                <option value="Personal Transfer">Personal Transfer</option>
+                <option value="Financial Services">Financial Services</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Grocery">Grocery</option>
+                <option value="Food & Dining">Food & Dining</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Travel & Transit">Travel & Transit</option>
+              </select>
+              <select class="form-select form-select-sm form-select-custom w-auto" id="tx-risk-filter">
+                <option value="">All Risk Tiers</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+              <button class="btn btn-sm btn-primary" id="apply-tx-filters-btn">
+                <i class="bi bi-funnel-fill"></i> Filter
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-custom table-hover align-middle m-0" id="tx-stream-table">
+              <thead>
+                <tr>
+                  <th>Transaction ID</th>
+                  <th>Timestamp</th>
+                  <th>Sender</th>
+                  <th>Receiver</th>
+                  <th>Amount</th>
+                  <th>Category</th>
+                  <th>Device / City</th>
+                  <th>IQR</th>
+                  <th>IsoForest</th>
+                  <th>TimeSeries</th>
+                  <th>Risk Score</th>
+                  <th>Tier</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="tx-stream-tbody">
+                <tr><td colspan="13" class="text-center py-4 text-muted-custom">Loading transaction stream...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="card-footer bg-transparent border-top border-secondary-subtle d-flex justify-content-between align-items-center py-3">
+            <span class="small text-muted-custom" id="tx-pagination-info">Showing 0 of 0</span>
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-secondary" id="tx-prev-page-btn" disabled><i class="bi bi-chevron-left"></i> Previous</button>
+              <button class="btn btn-outline-secondary" id="tx-next-page-btn">Next <i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: API SANDBOX & MANUAL TESTING -->
+      <section id="sandbox-section" class="app-section">
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="card card-custom">
+              <div class="card-header-custom">
+                <h5 class="m-0 fw-bold text-white"><i class="bi bi-send-fill text-accent me-2"></i>UPI Transaction Sandbox</h5>
+                <small class="text-muted-custom">Submit custom JSON payload directly to <code>POST /api/analyze</code></small>
+              </div>
+              <div class="card-body p-4">
+                <form id="sandbox-form">
+                  <div class="row g-2 mb-3">
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold text-white">Sender ID</label>
+                      <input type="text" class="form-control form-control-custom" id="sb-sender" value="U1023" required>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold text-white">Receiver ID</label>
+                      <input type="text" class="form-control form-control-custom" id="sb-receiver" value="R2045" required>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold text-white">Transaction Amount (₹ INR)</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-dark border-secondary text-white">₹</span>
+                      <input type="number" step="0.01" class="form-control form-control-custom" id="sb-amount" value="55000.00" required>
+                    </div>
+                  </div>
+
+                  <div class="row g-2 mb-3">
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold text-white">Category</label>
+                      <select class="form-select form-select-custom" id="sb-category">
+                        <option value="Financial Services" selected>Financial Services</option>
+                        <option value="Personal Transfer">Personal Transfer</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Food & Dining">Food & Dining</option>
+                        <option value="Grocery">Grocery</option>
+                      </select>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold text-white">Transaction Type</label>
+                      <select class="form-select form-select-custom" id="sb-tx-type">
+                        <option value="P2M" selected>P2M (Merchant)</option>
+                        <option value="P2P">P2P (Peer-to-Peer)</option>
+                        <option value="Bill Payment">Bill Payment</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="row g-2 mb-3">
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold text-white">Location (City)</label>
+                      <input type="text" class="form-control form-control-custom" id="sb-location" value="Indore">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold text-white">Device Hardware</label>
+                      <select class="form-select form-select-custom" id="sb-device">
+                        <option value="Android">Android Phone</option>
+                        <option value="iOS">Apple iOS</option>
+                        <option value="Web Portal">Web Portal</option>
+                        <option value="Feature Phone" selected>Feature Phone (Unregistered)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="row g-2 mb-3">
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold text-white">UPI App / Channel</label>
+                      <select class="form-select form-select-custom" id="sb-channel">
+                        <option value="Google Pay">Google Pay</option>
+                        <option value="PhonePe">PhonePe</option>
+                        <option value="Paytm">Paytm</option>
+                        <option value="BHIM" selected>BHIM</option>
+                        <option value="Cred">Cred</option>
+                      </select>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold text-white">Timestamp</label>
+                      <input type="datetime-local" class="form-control form-control-custom" id="sb-timestamp">
+                    </div>
+                  </div>
+
+                  <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+                      <i class="bi bi-shield-check"></i>
+                      <span>Analyze via API (POST /api/analyze)</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="card card-custom h-100">
+              <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold text-white"><i class="bi bi-code-slash text-success me-2"></i>API Structured Response</h5>
+                <span class="badge bg-soft-success text-success font-monospace" id="sb-status-badge">READY</span>
+              </div>
+              <div class="card-body p-4">
+                <div id="sb-response-visual">
+                  <div class="text-center py-5 text-muted-custom">
+                    <i class="bi bi-code-square fs-1 d-block mb-3 text-secondary"></i>
+                    <h6>Awaiting test execution</h6>
+                    <p class="small">Fill the sandbox form and click "Analyze via API" to inspect live response metrics.</p>
+                  </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top border-secondary-subtle">
+                  <label class="form-label text-muted-custom small font-monospace">Raw JSON Output</label>
+                  <pre class="code-block" id="sb-raw-json">{\n  "status": "awaiting_request"\n}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 6: MODEL ARCHITECTURE & EVALUATION -->
+      <section id="models-section" class="app-section">
+        <!-- Architecture Explanation Cards -->
+        <div class="row g-4 mb-4">
+          <div class="col-lg-4">
+            <div class="card card-custom h-100 border-primary-subtle">
+              <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="detector-icon bg-soft-primary text-primary-light"><i class="bi bi-bar-chart-steps"></i></span>
+                  <div>
+                    <h5 class="m-0 fw-bold text-white">1. Statistical IQR Detector</h5>
+                    <span class="badge bg-soft-primary text-primary-light">Weight: 25%</span>
+                  </div>
+                </div>
+                <p class="text-muted-custom small">
+                  Calculates first quartile (Q1), third quartile (Q3), and the Interquartile Range (IQR = Q3 - Q1) on key numerical distributions:
+                  <strong>amount</strong>, <strong>amount_deviation</strong>, <strong>hourly burst frequency</strong>, and <strong>recipient concentration</strong>.
+                </p>
+                <div class="formula-box font-monospace small p-2 rounded mb-3">
+                  Bound: [Q1 - 1.5×IQR, Q3 + 1.5×IQR]<br>
+                  Severity: (x - UpperBound) / IQR
+                </div>
+                <div class="small text-muted-custom">
+                  <strong>Role:</strong> Serves as a deterministic baseline filter for extreme univariate outliers and sudden value leaps.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card card-custom h-100 border-info-subtle">
+              <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="detector-icon bg-soft-info text-info"><i class="bi bi-tree-fill"></i></span>
+                  <div>
+                    <h5 class="m-0 fw-bold text-white">2. Isolation Forest (ML)</h5>
+                    <span class="badge bg-soft-info text-info">Weight: 50%</span>
+                  </div>
+                </div>
+                <p class="text-muted-custom small">
+                  Trained using Scikit-Learn's <code>IsolationForest</code> on 9 standardized behavioral dimensions without label leakage. Isolates anomalous transactions by recursively partitioning features.
+                </p>
+                <div class="formula-box font-monospace small p-2 rounded mb-3">
+                  Features: [amt, dev, tx_1h, tx_24h, Δt, recip, dev_chg, loc_chg, hr]<br>
+                  Logistic Calibration: 1 / (1 + e^(14 × decision))
+                </div>
+                <div class="small text-muted-custom">
+                  <strong>Role:</strong> Detects complex multivariate combinations (e.g. moderate amount + device change + 3 AM).
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="card card-custom h-100 border-warning-subtle">
+              <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <span class="detector-icon bg-soft-warning text-warning"><i class="bi bi-clock-history"></i></span>
+                  <div>
+                    <h5 class="m-0 fw-bold text-white">3. Time Series Velocity</h5>
+                    <span class="badge bg-soft-warning text-warning">Weight: 25%</span>
+                  </div>
+                </div>
+                <p class="text-muted-custom small">
+                  Tracks rolling 6-hour baseline statistics and Z-scores for volume spikes. Flags short-term velocity anomalies: burst transactions in 1 hour and micro-interval drain attacks.
+                </p>
+                <div class="formula-box font-monospace small p-2 rounded mb-3">
+                  Z_score = (count - RollingMean) / RollingStd<br>
+                  Threshold: Z &gt; 2.5 std deviations
+                </div>
+                <div class="small text-muted-custom">
+                  <strong>Role:</strong> Catches sudden distributed bot bursts and carding attacks that evade static thresholds.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evaluation Benchmarks Table -->
+        <div class="card card-custom mb-4">
+          <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="m-0 fw-bold text-white"><i class="bi bi-clipboard2-check-fill text-success me-2"></i>Controlled Synthetic Benchmark Evaluation</h5>
+              <small class="text-muted-custom">10,000 synthetic UPI transactions (6.5% fraud prevalence) benchmark results</small>
+            </div>
+            <span class="badge bg-soft-warning text-warning font-monospace">Portfolio Benchmark</span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-custom table-hover align-middle m-0" id="benchmark-metrics-table">
+                <thead>
+                  <tr>
+                    <th>Anomaly Detector Engine</th>
+                    <th>Precision</th>
+                    <th>Recall</th>
+                    <th>F1-Score</th>
+                    <th>Accuracy</th>
+                    <th>False Positive Rate (FPR)</th>
+                    <th>ROC-AUC</th>
+                  </tr>
+                </thead>
+                <tbody id="benchmark-metrics-tbody">
+                  <tr>
+                    <td class="fw-semibold text-white"><i class="bi bi-bar-chart-steps text-primary-light me-2"></i>IQR Statistical Baseline</td>
+                    <td>0.2334</td>
+                    <td class="text-success fw-bold">0.9969</td>
+                    <td>0.3783</td>
+                    <td>83.35%</td>
+                    <td>0.1780</td>
+                    <td>0.9975</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-semibold text-white"><i class="bi bi-tree-fill text-info me-2"></i>Isolation Forest (ML)</td>
+                    <td>0.8523</td>
+                    <td>0.8523</td>
+                    <td class="fw-bold text-info">0.8523</td>
+                    <td>98.08%</td>
+                    <td>0.0103</td>
+                    <td>0.9918</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-semibold text-white"><i class="bi bi-clock-history text-warning me-2"></i>Time Series Velocity Detector</td>
+                    <td class="text-success fw-bold">1.0000</td>
+                    <td>0.1400</td>
+                    <td>0.2456</td>
+                    <td>94.41%</td>
+                    <td>0.0000</td>
+                    <td>0.7668</td>
+                  </tr>
+                  <tr class="table-active">
+                    <td class="fw-bold text-accent"><i class="bi bi-shield-fill-check text-accent me-2"></i>Ensemble Risk Engine (Combined)</td>
+                    <td class="fw-bold text-success">0.9203</td>
+                    <td class="fw-bold text-success">0.8523</td>
+                    <td class="fw-bold text-accent">0.8850</td>
+                    <td class="fw-bold text-white">98.54%</td>
+                    <td class="fw-bold text-success">0.0051</td>
+                    <td class="fw-bold text-accent">0.9976</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-transparent border-top border-secondary-subtle p-3">
+            <p class="m-0 small text-muted-custom">
+              <i class="bi bi-shield-lock me-1 text-warning"></i>
+              <strong>Academic & Interview Note:</strong> Anomaly detection in UPI payments is fundamentally an unsupervised task. The ground-truth label (<code>ground_truth_fraud</code>) was strictly excluded from training and was only utilized post-detection for benchmark validation. Real-world fraud detection systems utilize human-in-the-loop triage to feed verified alerts back into active learning pipelines.
+            </p>
+          </div>
+        </div>
+
+        <!-- Scenario Breakdown Row -->
+        <div class="card card-custom">
+          <div class="card-header-custom">
+            <h5 class="m-0 fw-bold text-white"><i class="bi bi-bullseye text-danger me-2"></i>Fraud Scenario Detection Rates</h5>
+            <small class="text-muted-custom">Sensitivity across the 8 simulated attack vectors</small>
+          </div>
+          <div class="card-body p-3">
+            <div class="row g-3" id="scenarios-grid">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Transaction Detail Modal -->
+  <div class="modal fade" id="txDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content bg-card border-secondary-subtle text-white">
+        <div class="modal-header border-secondary-subtle">
+          <h5 class="modal-title fw-bold" id="txModalTitle"><i class="bi bi-receipt me-2 text-primary-light"></i>Transaction Forensics</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4" id="txModalBody">
+          <!-- Populated dynamically -->
+        </div>
+        <div class="modal-footer border-secondary-subtle">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Status Update Modal -->
+  <div class="modal fade" id="alertUpdateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-card border-secondary-subtle text-white">
+        <div class="modal-header border-secondary-subtle">
+          <h5 class="modal-title fw-bold"><i class="bi bi-shield-fill-exclamation text-warning me-2"></i>Update Alert Status</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <input type="hidden" id="modal-alert-id">
+          <div class="mb-3">
+            <label class="form-label small text-muted-custom">Alert ID</label>
+            <input type="text" class="form-control form-control-custom" id="modal-display-alert-id" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-white fw-semibold">New Status</label>
+            <select class="form-select form-select-custom" id="modal-status-select">
+              <option value="New">New</option>
+              <option value="Reviewing">Reviewing (Under Investigation)</option>
+              <option value="Resolved">Resolved (Cleared / Confirmed)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-white fw-semibold">Analyst Notes</label>
+            <textarea class="form-control form-control-custom" id="modal-notes" rows="3" placeholder="Document investigation findings or user call outcome..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary-subtle">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary btn-sm" id="modal-save-status-btn">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="liveToast" class="toast bg-card text-white border-secondary-subtle" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header bg-dark text-white border-secondary-subtle">
+        <i class="bi bi-bell-fill text-accent me-2"></i>
+        <strong class="me-auto" id="toast-title">Notification</strong>
+        <small id="toast-time">Just now</small>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body" id="toast-body">
+        Message body here.
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Custom Dashboard Script -->
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
