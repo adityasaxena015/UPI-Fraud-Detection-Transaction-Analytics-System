@@ -47,5 +47,5 @@ Detects unusual changes in transaction behavior over time.
 
 ```bash
 git clone <your-repository-url>
-cd AI-Sentinel-UPI-Fraud-Detection
+cd UPI-Fraud-Detection
 pip install -r requirements.txt
